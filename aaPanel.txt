@@ -1,0 +1,24 @@
+Install Slims di aaPanel 
+========================
+1. Slims Versi 9, 9.6.1 # link : https://github.com/slims/slims9_bulian/releases
+2. PHP yang digunakan Versi 8.2.12 # Link Xampp : https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/8.2.12/
+
+
+Error MYSQL saat Instalasi
+===========================
+You do not have the SUPER privilege and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
+Solusinya :
+1. App Store > MySQL > Setting > Configuration
+2. Tambahkan = log_bin_trust_function_creators = 1    # ke my.cnf bawah /etc, # dibawah [mysqld]
+3. Restart mysql
+
+
+
+
+
+
+
+
+
+
+================ PUDIN.MY.ID =======================
