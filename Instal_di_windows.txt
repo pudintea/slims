@@ -9,6 +9,7 @@ Install Slims
 Link : https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/8.2.12/xampp-windows-x64-8.2.12-0-VS16-installer.exe/download
 
 Aktifkan php GD
+===============
 Xampp Control > Apache > Config > PHP (php.ini)
 ; extension=gd2
 atau
@@ -17,5 +18,9 @@ atau
 Tolong hapus tanda ; untuk mengaktifkan.
 
 
+Link Visitor dan Login
+=======================
+1. http://localhost/slims/index.php?p=visitor
+2. http://localhost/slims/index.php?p=login
 
 =================== PUDIN.MY.ID ================================
