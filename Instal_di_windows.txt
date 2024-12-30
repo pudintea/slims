@@ -1,0 +1,21 @@
+Install Slims
+========================
+30 Desember 2024
+1. Slims Versi 9, 9.6.1 # link : https://github.com/slims/slims9_bulian/releases
+2. PHP yang digunakan Versi 8.2.12 # Link Xampp : https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/8.2.12/
+3. Download yang ini : xampp-windows-x64-8.2.12-0-VS16-installer.exe
+4. Install Xampp.
+
+Link : https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/8.2.12/xampp-windows-x64-8.2.12-0-VS16-installer.exe/download
+
+Aktifkan php GD
+Xampp Control > Apache > Config > PHP (php.ini)
+; extension=gd2
+atau
+; extension=gd
+
+Tolong hapus tanda ; untuk mengaktifkan.
+
+
+
+=================== PUDIN.MY.ID ================================
