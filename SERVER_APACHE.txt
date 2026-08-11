@@ -1,0 +1,367 @@
+# Install Server Untuk Kebutuhan Slims 9 Bulian
+
+================ UPDATE & UPGRADE ==============
+> sudo apt update && apt upgrade -y
+
+================ WAKTU ==========================
+- mengganti waktu server localtime jakarta
+> mv /etc/localtime /etc/localtime-asal && cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime && timedatectl set-timezone Asia/Jakarta
+
+- mengubah timezone asia-jakarta
+> timedatectl set-timezone Asia/Jakarta
+
+ZIP
+====
+> apt install unzip && apt install zip -y
+
+APACHE
+======
+> sudo apt update
+> sudo apt install apache2 -y
+> sudo ufw allow in "Apache"
+
+Mengaktifkan MPM EVENT
+========================
+> apachectl -V | grep MPM    // Cek Status apakah sudah mpm_event
+
+> sudo systemctl stop apache2
+> sudo a2dismod mpm_prefork
+> sudo a2dismod mpm_worker
+> sudo a2enmod mpm_event
+> systemctl restart apache2
+
+> sudo apt install libapache2-mod-fcgid -y
+> sudo a2enmod proxy_fcgi setenvif // Aktifkan Modul Proxy
+
+Untuk Cache dan Kompresi, Aktifkan mod_deflate dan mod_expires
+> a2enmod deflate expires headers
+> nano /etc/apache2/apache2.conf
+Masukan di paling atas :
+ServerName localhost
+
+Masukan ini di paling bawah :
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/html "access plus 1 day"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+</IfModule>
+
+> nano /etc/apache2/conf-available/security.conf
+
+pilih masukan dan sesuaikan :
+
+1. Allow for Same Origin (Default Action)
+
+Header set X-Content-Type-Options: "nosniff"
+Header set X-Frame-Options: "sameorigin"
+Header set Content-Security-Policy "frame-ancestors 'self';"
+
+# Sembunyikan versi php
+Header always unset X-Powered-By
+Header unset X-Powered-By
+#Header set Server "secure"
+Header set Server "Nginx"
+
+# Tambahan Lagi
+Header set X-XSS-Protection "1; mode=block"
+Header always append X-Frame-Options DENY
+Header set X-Permitted-Cross-Domain-Policies "none"
+Header always set Referrer-Policy "strict-origin"
+
+> systemctl restart apache2
+
+Apache Rewrite
+==============
+> sudo a2enmod rewrite
+> nano /etc/apache2/sites-available/000-default.conf
+
+        <Directory /var/www/ypia/>
+                Options Indexes FollowSymLinks MultiViews
+                AllowOverride All
+                Order allow,deny
+                allow from all
+        </Directory>
+
+        ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+        <Directory "/usr/lib/cgi-bin">
+                AllowOverride None
+                Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+                Order allow,deny
+                Allow from all
+        </Directory>
+===============================
+VERI BARU VIRTUALHOST
+==============================
+	<Directory /var/www/app/public>
+		Options Indexes FollowSymLinks
+		AllowOverride All
+		Require all granted
+	</Directory>
+	# AKTIFKAN HSTS, HTTP Strict Transport Security
+	# Header always set Strict-Transport-Security max-age=31536000
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+
+PORT, HTTPS ports supported by Cloudflare
+=========================================
+> nano /etc/apache2/ports.conf
+Listen 2053
+Listen 2083
+Listen 2087
+Listen 2096
+Listen 8443
+Listen 8080
+
+Cek versi Apache
+------------------
+> apache2 -V
+> httpd -V
+> apachectl -V
+
+
+
+==========================
+PHP FPM INSTALL
+==========================
+> sudo apt install software-properties-common -y
+> sudo add-apt-repository ppa:ondrej/php -y
+> sudo apt update
+> sudo apt install php8.4-fpm php8.4-mysql php8.4-gd php8.4-mbstring php8.4-curl php8.4-cgi php8.4-xsl php8.4-zip php8.4-opcache php8.4-intl php8.4-bcmath php8.4-imagick php8.4-cli php8.4-xml php8.4-common -y
+> sudo systemctl status php8.4-fpm
+
+Untuk PostgreeSQL
+> sudo apt install php8.4-pgsql -y
+
+Jika belum running
+> sudo systemctl enable php8.4-fpm
+> sudo systemctl start php8.4-fpm
+> sudo a2dismod php8.4
+
+Aktifkan Modul Proxy dan PHP-FPM
+> sudo a2enconf php8.4-fpm
+
+Catatan: Anda dapat membaca konfigurasi interaksi antara program PHP dan Apache HTTP melalui soket UNIX dengan yang berikut:
+> cat /etc/apache2/conf-enabled/php8.4-fpm.conf
+
+> sudo apachectl configtest
+Output
+Syntax OK
+
+RESTART
+> sudo systemctl restart apache2
+
+CEK KONFIGURASI
+================
+> sudo apachectl -M | grep 'mpm'
+Output Anda akan seperti berikut:
+mpm_event_module (shared)
+
+Anda dapat mengulangi hal yang sama untuk proxymodul dan FastCGI:
+
+> sudo apachectl -M | grep 'proxy'
+Output akan menunjukkan:
+proxy_module (shared)
+proxy_fcgi_module (shared)
+
+Aktifkan OPCache
+================
+Aktifkan OPCache (opcache.enable=1 di php.ini)
+> nano /etc/php/8.4/fpm/php.ini  //paling bawah posisinya
+
+Restart PHP FPM
+================
+> sudo systemctl restart php8.4-fpm
+cek status
+> sudo systemctl status php8.4-fpm
+
+Mengatur Besaran File Upload
+============================
+> nano /etc/php/8.4/fpm/php.ini
+
+Ctrl + W untuk mencari text.
+Cari bagian :
+- upload_max_filesize
+- post_max_size
+> sudo systemctl restart php8.4-fpm
+> service apache2 restart
+
+
+INDEX NGINX 2
+> mv /var/www/html/index.html /var/www/html/asli-----index.html
+> nano /var/www/html/index.html
+===============
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+===================================
+Downloading and Installing COMPOSER
+===================================
+Doc : https://www.digitalocean.com/community/tutorials/how-to-install-composer-on-ubuntu-22-04-quickstart
+
+
+> cd ~
+> curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
+
+> HASH=`curl -sS https://composer.github.io/installer.sig`
+> echo $HASH
+
+> php -r "if (hash_file('SHA384', '/tmp/composer-setup.php') === '$HASH') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+OUTPUT :
+Installer verified
+
+Jika output mengatakan Installer corrupt, Anda perlu mengunduh skrip instalasi lagi dan memeriksa ulang apakah Anda menggunakan hash yang benar.
+Kemudian, ulangi proses verifikasi. Jika Anda memiliki penginstal yang terverifikasi, Anda dapat melanjutkan.
+
+Untuk menginstal composersecara global, gunakan perintah berikut yang akan mengunduh dan menginstal Composer sebagai perintah di seluruh sistem bernama composer, di bawah /usr/local/bin:
+> sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+
+Output
+All settings correct for using Composer
+Downloading...
+
+Composer (version 2.3.5) successfully installed to: /usr/local/bin/composer
+Use it: php /usr/local/bin/composer
+
+TEST
+> composer
+
+Output
+   ______
+  / ____/___  ____ ___  ____  ____  ________  _____
+ / /   / __ \/ __ `__ \/ __ \/ __ \/ ___/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ (__  )  __/ /
+\____/\____/_/ /_/ /_/ .___/\____/____/\___/_/
+                    /_/
+Composer version 2.3.5 2022-04-13 16:43:00
+
+Usage:
+  command [options] [arguments]
+
+Options:
+  -h, --help                     Display help for the given command. When no command is given display help for the list command
+  -q, --quiet                    Do not output any message
+  -V, --version                  Display this application version
+      --ansi|--no-ansi           Force (or disable --no-ansi) ANSI output
+  -n, --no-interaction           Do not ask any interactive question
+      --profile                  Display timing and memory usage information
+      --no-plugins               Whether to disable plugins.
+      --no-scripts               Skips the execution of all scripts defined in composer.json file.
+  -d, --working-dir=WORKING-DIR  If specified, use the given directory as working directory.
+      --no-cache                 Prevent use of the cache
+  -v|vv|vvv, --verbose           Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+. . .
+
+
+ADD USER
+==========
+> adduser sipudin
+> sudo usermod -a -G www-data sipudin
+> sudo usermod -g www-data sipudin
+
+
+
+VIRTUALISASI
+===========================
+> a2enmod proxy && a2enmod proxy_fcgi && a2enmod rewrite
+> nano /etc/apache2/sites-available/slims.conf
+<VirtualHost *:8080>
+    ServerName _
+    DocumentRoot /var/www/public/slims
+
+    <Directory /var/www/public/slims>
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    <FilesMatch \.php$>
+        SetHandler "proxy:unix:/run/php/php8.4-fpm.sock|fcgi://localhost/"
+    </FilesMatch>
+
+    ErrorLog ${APACHE_LOG_DIR}/sdia54-slims_error.log
+    CustomLog ${APACHE_LOG_DIR}/sdia54-slims_access.log combined
+</VirtualHost>
+
+> a2ensite slims.conf
+> service apache2 restart
+
+
+# MariaDB 11.8 LTS, 2026
+===================
+Add MariaDB APT Repository:
+> curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=11.8
+> sudo apt update
+
+Install
+> sudo apt install mariadb-server mariadb-client -y
+
+> sudo mariadb-secure-installation
+> sudo systemctl status mariadb
+> mariadb --version
+
+AKSESS SETARA USER ROOT
+===================================
+Login sebagai root MariaDB
+> sudo mariadb
+atau
+> mariadb -u root -p
+
+Buat User
+> CREATE USER 'upudin'@'localhost' IDENTIFIED BY 'rahasia';
+
+Beri privilege setara root
+> GRANT ALL PRIVILEGES ON *.* TO 'upudin'@'localhost' WITH GRANT OPTION;
+
+Artinya:
+ALL PRIVILEGES → semua hak
+*.* → semua database & tabel
+WITH GRANT OPTION → bisa memberi privilege ke user lain (ini yang bikin setara root)
+
+Reload privilege
+> FLUSH PRIVILEGES;
+Verifikasi
+> SHOW GRANTS FOR 'upudin'@'localhost';
+
+Hasil yang benar akan mirip:
+> GRANT ALL PRIVILEGES ON *.* TO 'upudin'@'localhost' WITH GRANT OPTION
+
+
+Alternatif Lebih Aman (Disarankan)
+===================================
+Kalau tujuanmu hanya admin database tapi bukan super-root, gunakan:
+GRANT ALL PRIVILEGES ON *.* TO 'upudin'@'localhost';
+
+
+
+
+
+============== PUDN SAEPUDIN ===============
