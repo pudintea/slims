@@ -1,6 +1,18 @@
 
 Kode 1 : $2y$12$UoISdMP5GttGZQ0/rYs8U.wONAwpp3WVZps/eU3VruHqnsLeE1B6q
 
+Anda harus punya akses ke cPanel sebagai prasyarat
+Masuk ke cPanel
+Pilih menu phpMyAdmin
+Pilih database SLiMS Anda
+Pilih menu user atau tabel >> user
+Klik ubah pada bagian nama user admin yang Anda lupa passwordnya
+Pada bagian password, masukkan kode berikut.
 
+$2y$10$2To8obfcy16GIY7bcxO9seTfDUZOGSo7GlnbBLK7XkD3EJYRt0VLu
+
+Silakan logout, karena proses sudah selesai
+Selanjutnya, tinggal login ke SLiMS Anda menggunakan user yang Anda lupa passwordnya, copy-paste atau ketikkan "PasswordBaru" pada kotak password
+Setelah berhasil login, silakan ubah password Anda sesuai keinginan
 
 == Pudin Saepudin ==
